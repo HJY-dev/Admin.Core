@@ -6,4 +6,8 @@
     public class MySqlDb
     {
     }
+
+    public class PgSqlDb
+    {
+    }
 }

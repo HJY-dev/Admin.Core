@@ -1713,6 +1713,11 @@
             启用
             </summary>
         </member>
+        <member name="P:Admin.Core.Service.Admin.View.Input.ViewSyncDto.ParentId">
+            <summary>
+            上级
+            </summary>
+        </member>
         <member name="P:Admin.Core.Service.Admin.View.Input.ViewSyncDto.Name">
             <summary>
             视图命名

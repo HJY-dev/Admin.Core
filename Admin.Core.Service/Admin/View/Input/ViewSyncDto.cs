@@ -3,6 +3,10 @@
     public class ViewSyncDto
     {
         /// <summary>
+        /// 上级
+        /// </summary>
+        public long ParentId { get; set; } = 0;
+        /// <summary>
         /// 视图命名
         /// </summary>
         public string Name { get; set; }

@@ -976,6 +976,29 @@
             <param name="ids"></param>
             <returns></returns>
         </member>
+        <member name="T:Admin.Core.Controllers.Test.AreaController">
+            <summary>
+            域控制器
+            </summary>
+        </member>
+        <member name="T:Admin.Core.Controllers.Test.CustomerController">
+            <summary>
+            客户管理
+            </summary>
+        </member>
+        <member name="M:Admin.Core.Controllers.Test.CustomerController.GetAllCustomers">
+            <summary>
+            查询全部员工
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Admin.Core.Controllers.Test.CustomerController.GetCustomers(System.String)">
+            <summary>
+            查询单条员工
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
         <member name="M:Admin.Core.Db.DBServiceCollectionExtensions.AddDbAsync(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Hosting.IHostEnvironment)">
             <summary>
             添加数据库

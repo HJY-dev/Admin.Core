@@ -129,6 +129,10 @@ namespace Admin.Core.Db
                             var mdb = CreateMultiDbBuilder(multiDb).Build<MySqlDb>();
                             services.AddSingleton(mdb);
                             break;
+                        case nameof(PgSqlDb):
+                            var pg = CreateMultiDbBuilder(multiDb).Build<PgSqlDb>();
+                            services.AddSingleton(pg);
+                            break;
 
                         default:
                             break;

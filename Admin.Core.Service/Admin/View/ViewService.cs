@@ -161,6 +161,7 @@ namespace Admin.Core.Service.Admin.View
                         {
                             view.Description = inputView.Description;
                         }
+                        view.ParentId = inputView.ParentId;
                         view.Name = inputView.Name;
                         view.Path = inputView.Path;
                         view.Enabled = true;
@@ -182,7 +183,7 @@ namespace Admin.Core.Service.Admin.View
                 .UpdateColumns(a => new { a.Label, a.Name, a.Path, a.Enabled, a.Description })
                 .ExecuteAffrowsAsync();
             }
-            
+
 
             return ResponseOutput.Ok();
         }

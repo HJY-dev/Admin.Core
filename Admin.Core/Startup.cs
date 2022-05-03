@@ -468,6 +468,15 @@ namespace Admin.Core
             //跨域
             app.UseCors(DefaultCorsPolicyName);
 
+            #region 请求头日志
+            app.Use(async (context, next) =>
+            {
+                // Console.WriteLine(JsonConvert.SerializeObject(context.Request.Headers));
+                await next.Invoke();
+            });
+
+            #endregion
+
             //认证
             app.UseAuthentication();
 
