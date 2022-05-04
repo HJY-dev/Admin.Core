@@ -7,9 +7,14 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
 
+/*
+Linux下Ubuntu如果报Gdip错误，需要按照以下步骤操作
+1. apt-get install libgdiplus
+2. cd /usr/lib
+3. ln -s libgdiplus.so gdiplus.dll
+*/
 namespace Admin.Tools.Captcha
 {
     /// <summary>
@@ -48,6 +53,76 @@ namespace Admin.Tools.Captcha
             }
         }
 
+        private void ReadPixel(Bitmap img, int x, int y, int[] pixels)
+        {
+            int xStart = x - 1;
+            int yStart = y - 1;
+            int current = 0;
+            for (int i = xStart; i < 3 + xStart; i++)
+            {
+                for (int j = yStart; j < 3 + yStart; j++)
+                {
+                    int tx = i;
+                    if (tx < 0)
+                    {
+                        tx = -tx;
+
+                    }
+                    else if (tx >= img.Width)
+                    {
+                        tx = x;
+                    }
+                    int ty = j;
+                    if (ty < 0)
+                    {
+                        ty = -ty;
+                    }
+                    else if (ty >= img.Height)
+                    {
+                        ty = y;
+                    }
+                    pixels[current++] = img.GetPixel(tx, ty).ToArgb();
+
+                }
+            }
+        }
+
+        private void FillMatrix(int[][] matrix, int[] values)
+        {
+            int filled = 0;
+            for (int i = 0; i < matrix.Length; i++)
+            {
+                int[] x = matrix[i];
+                for (int j = 0; j < x.Length; j++)
+                {
+                    x[j] = values[filled++];
+                }
+            }
+        }
+
+        private Color AvgMatrix(int[][] matrix)
+        {
+            int r = 0;
+            int g = 0;
+            int b = 0;
+            for (int i = 0; i < matrix.Length; i++)
+            {
+                int[] x = matrix[i];
+                for (int j = 0; j < x.Length; j++)
+                {
+                    if (j == 1)
+                    {
+                        continue;
+                    }
+                    Color c = Color.FromArgb(x[j]);
+                    r += c.R;
+                    g += c.G;
+                    b += c.B;
+                }
+            }
+            return Color.FromArgb(r / 8, g / 8, b / 8);
+        }
+
         /// <summary>
         /// 根据模板生成拼图
         /// </summary>
@@ -58,8 +133,19 @@ namespace Admin.Tools.Captcha
         /// <returns></returns>
         private Bitmap CutByTemplate(Bitmap baseImage, Bitmap templateImage, int x, int y)
         {
-            Bitmap newImage = new Bitmap(templateImage.Width, baseImage.Height, PixelFormat.Format32bppRgb);
-            newImage.MakeTransparent();
+            //生成透明背景图
+            Bitmap newImage = new Bitmap(templateImage.Width, baseImage.Height);
+            for (int i = 0, newImageWidth = templateImage.Width; i < newImageWidth; i++)
+            {
+                for (int j = 0, newImageHeight = baseImage.Height; j < newImageHeight; j++)
+                {
+                    newImage.SetPixel(i, j, Color.FromArgb(0, 0, 0, 0));
+                }
+            }
+
+            // 临时数组遍历用于高斯模糊存周边像素值
+            int[][] martrix = { new int[3], new int[3], new int[3] };
+            int[] values = new int[9];
 
             int xLength = templateImage.Width;
             int yLength = templateImage.Height;
@@ -78,7 +164,12 @@ namespace Admin.Tools.Captcha
                         newImage.SetPixel(i, y + j, oriImageColor);
 
                         //抠图区域半透明
-                        baseImage.SetPixel(x + i, y + j, Color.FromArgb(120, oriImageColor.R, oriImageColor.G, oriImageColor.B));
+                        //baseImage.SetPixel(x + i, y + j, Color.FromArgb(120, oriImageColor.R, oriImageColor.G, oriImageColor.B));
+
+                        //抠图区域高斯模糊
+                        ReadPixel(baseImage, x + i, y + j, values);
+                        FillMatrix(martrix, values);
+                        baseImage.SetPixel(x + i, y + j, AvgMatrix(martrix));
                     }
 
                     //防止数组越界判断
@@ -109,6 +200,10 @@ namespace Admin.Tools.Captcha
         /// <param name="y"></param>
         private void InterferenceByTemplate(Bitmap baseImage, Bitmap templateImage, int x, int y)
         {
+            // 临时数组遍历用于高斯模糊存周边像素值
+            int[][] martrix = { new int[3], new int[3], new int[3] };
+            int[] values = new int[9];
+
             int xLength = templateImage.Width;
             int yLength = templateImage.Height;
             // 模板图像宽度
@@ -124,7 +219,12 @@ namespace Admin.Tools.Captcha
                         Color oriImageColor = baseImage.GetPixel(x + i, y + j);
 
                         //抠图区域半透明
-                        baseImage.SetPixel(x + i, y + j, Color.FromArgb(120, oriImageColor.R, oriImageColor.G, oriImageColor.B));
+                        //baseImage.SetPixel(x + i, y + j, Color.FromArgb(120, oriImageColor.R, oriImageColor.G, oriImageColor.B));
+
+                        //抠图区域高斯模糊
+                        ReadPixel(baseImage, x + i, y + j, values);
+                        FillMatrix(martrix, values);
+                        baseImage.SetPixel(x + i, y + j, AvgMatrix(martrix));
                     }
 
                     //防止数组越界判断
@@ -143,7 +243,6 @@ namespace Admin.Tools.Captcha
                 }
             }
         }
-        
 
         /// <summary>
         /// 更改图片尺寸
@@ -270,13 +369,13 @@ namespace Admin.Tools.Captcha
             //Bitmap baseImage = new Bitmap(stream);
             //stream.Dispose();
 
-            var oriImage = Image.FromFile(Directory.GetCurrentDirectory() + $@"\wwwroot\captcha\jigsaw\{new Random().Next(1, 4)}.jpg");
+            var oriImage = Image.FromFile($@"{Directory.GetCurrentDirectory()}\wwwroot\captcha\jigsaw\{new Random().Next(1, 4)}.jpg".ToPath());
             //更改图片尺寸
             //Bitmap baseImage = ResizeImage(oriImage, 310, 155);
             Bitmap baseImage = new Bitmap(oriImage);
             oriImage.Dispose();
 
-            var oriTemplate = Image.FromFile(Directory.GetCurrentDirectory() + $@"\wwwroot\captcha\jigsaw\templates\{new Random().Next(1, 7)}.png");
+            var oriTemplate = Image.FromFile($@"{Directory.GetCurrentDirectory()}\wwwroot\captcha\jigsaw\templates\{new Random().Next(1, 7)}.png".ToPath());
             Bitmap templateImage = new Bitmap(oriTemplate);
             oriTemplate.Dispose();
 
