@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Admin.Core.Model.Test
 {
-    [Table(Name = "Customers")]
+    [Table(Name = "t_customers")]
     public class Customers
     {
         [Column(IsPrimary =true)]
